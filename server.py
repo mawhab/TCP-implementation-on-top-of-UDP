@@ -1,21 +1,42 @@
 import socketserver
+from TCP import TCPHeader
 
 class Connection():
-    pass
+    def __init__(self, src, dest) -> None:
+        self.socket = (src,dest)
+        self.handshake = 0 # 0 = not done, 1 = stage one done, 2 = stage 2 done, 3 = 3 way handshake complete
+        self.ongoing = False
+        
+        
+    def __eq__(self, __value: object) -> bool:
+        return isinstance(__value, Connection) and hash(self.socket) == hash(__value.socket)
+    
+    def handle(self, header):
+        if self.handshake<3:
+            if Connection.check_handshake(header) == self.handshake+1:
+                self.handshake+=1
+                return 1 # success
+            else:
+                print('Error in handshake')
+                return -1
+        
+            
+    def check_handshake(header):
+        if header.SYN and header.ACK:
+            return 2
+        if header.SYN:
+            return 1
+        if header.ACK:
+            return 3
+        
+    def close(self):
+        pass
 
-counter = 0
+HOST, PORT = "localhost", 9999
 
-class TCPHeader():
-    def __init__(self, header) -> None:
-        self.SYN = int(header[0],2)
-        self.ACK = int(header[1],2)
-        self.FIN = int(header[2],2)
-        self.PID = int(header[3:35],2)
-        self.seq_num = int(header[35:67],2)
-        self.ack_num = int(header[67:99],2)
-        self.checksum = int(header[99:227],2)
 
 class MyUDPHandler(socketserver.BaseRequestHandler):
+    connections = []
     def split_header_contents(self):
         # APPROACH 1
         
@@ -36,12 +57,18 @@ class MyUDPHandler(socketserver.BaseRequestHandler):
         
     
     def setup(self):
-        global counter
-        self.counter = counter
-        counter +=1
+        self.current_connection = Connection(self.request[1], (HOST, PORT))
+        try:
+            idx = MyUDPHandler.connections.index(current_connection)
+            self.current_connection = MyUDPHandler[idx]
+        except:
+            print('New connection found')
+            MyUDPHandler.connections.append(current_connection)
         
     def handle(self):
         self.msg = self.request[0].strip()
+        self.split_header_contents()
+        self.current_connection.handle(self.header)
         # self.split_header_contents()
         # CHECK WHICH CONNECTION
         # socket = self.request[1]
