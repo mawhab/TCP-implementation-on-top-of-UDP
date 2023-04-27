@@ -1,36 +1,5 @@
 import socketserver
-from TCP import TCPHeader
-
-class Connection():
-    def __init__(self, src, dest) -> None:
-        self.socket = (src,dest)
-        self.handshake = 0 # 0 = not done, 1 = stage one done, 2 = stage 2 done, 3 = 3 way handshake complete
-        self.ongoing = False
-        
-        
-    def __eq__(self, __value: object) -> bool:
-        return isinstance(__value, Connection) and hash(self.socket) == hash(__value.socket)
-    
-    def handle(self, header):
-        if self.handshake<3:
-            if Connection.check_handshake(header) == self.handshake+1:
-                self.handshake+=1
-                return 1 # success
-            else:
-                print('Error in handshake')
-                return -1
-        
-            
-    def check_handshake(header):
-        if header.SYN and header.ACK:
-            return 2
-        if header.SYN:
-            return 1
-        if header.ACK:
-            return 3
-        
-    def close(self):
-        pass
+from TCP import *
 
 HOST, PORT = "localhost", 9999
 
@@ -57,13 +26,13 @@ class MyUDPHandler(socketserver.BaseRequestHandler):
         
     
     def setup(self):
-        self.current_connection = Connection(self.request[1], (HOST, PORT))
+        self.current_connection = ServerConnection(self.request[1], (HOST, PORT))
         try:
-            idx = MyUDPHandler.connections.index(current_connection)
+            idx = MyUDPHandler.connections.index(self.current_connection)
             self.current_connection = MyUDPHandler[idx]
         except:
             print('New connection found')
-            MyUDPHandler.connections.append(current_connection)
+            MyUDPHandler.connections.append(self.current_connection)
         
     def handle(self):
         self.msg = self.request[0].strip()

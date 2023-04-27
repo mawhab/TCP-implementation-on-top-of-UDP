@@ -1,5 +1,6 @@
 import socket
-import sys
+from TCP import *
+
 
 HOST, PORT = "localhost", 9999
 # data = " ".join(sys.argv[1:])
@@ -15,3 +16,10 @@ received = str(sock.recv(1024), "utf-8")
 
 print("Sent:     {}".format(data))
 print("Received: {}".format(received))
+
+# TODO 
+# connection.connect()
+# connection.send()
+# connection.disconnect()
+
+# connect(): start 3 way handshake
